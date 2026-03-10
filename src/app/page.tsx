@@ -1,65 +1,110 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useMemo } from "react";
+import { recipes, categories, Recipe } from "@/data/recipes";
+import SearchBar from "@/components/SearchBar";
+import CategoryFilter from "@/components/CategoryFilter";
+import RecipeCard from "@/components/RecipeCard";
+import RecipeModal from "@/components/RecipeModal";
 
 export default function Home() {
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState("Все");
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+
+  const filtered = useMemo(() => {
+    return recipes.filter((r) => {
+      const matchesCategory =
+        activeCategory === "Все" || r.category === activeCategory;
+      const q = search.toLowerCase();
+      const matchesSearch =
+        !q ||
+        r.title.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q) ||
+        r.ingredients.some((i) => i.toLowerCase().includes(q)) ||
+        r.tags.some((t) => t.toLowerCase().includes(q));
+      return matchesCategory && matchesSearch;
+    });
+  }, [search, activeCategory]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen bg-stone-50">
+      {/* Header */}
+      <header className="bg-gradient-to-b from-amber-50 to-stone-50 pt-12 pb-8 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <div className="text-5xl mb-3">🧁</div>
+          <h1 className="text-4xl font-bold text-stone-800 mb-2">
+            Сладости и Радости
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-stone-500 text-lg mb-8">
+            Меню и рецепты нашей кофейни
           </p>
+          <SearchBar value={search} onChange={setSearch} />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      {/* Categories */}
+      <div className="sticky top-0 z-10 bg-stone-50/80 backdrop-blur-md py-4 px-4 border-b border-stone-100">
+        <CategoryFilter
+          categories={categories}
+          active={activeCategory}
+          onChange={setActiveCategory}
+        />
+      </div>
+
+      {/* Grid */}
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {filtered.length === 0 ? (
+          <div className="text-center py-20">
+            <div className="text-6xl mb-4">🔍</div>
+            <p className="text-stone-400 text-lg">
+              Ничего не найдено. Попробуйте другой запрос.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-stone-400 text-sm">
+                {filtered.length}{" "}
+                {declension(filtered.length, [
+                  "позиция",
+                  "позиции",
+                  "позиций",
+                ])}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onClick={setSelectedRecipe}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-stone-200 py-8 px-4 text-center text-stone-400 text-sm">
+        <p>© 2026 Сладости и Радости · Рыбинск</p>
+      </footer>
+
+      {/* Modal */}
+      <RecipeModal
+        recipe={selectedRecipe}
+        onClose={() => setSelectedRecipe(null)}
+      />
     </div>
   );
+}
+
+function declension(n: number, forms: [string, string, string]): string {
+  const abs = Math.abs(n) % 100;
+  const lastDigit = abs % 10;
+  if (abs > 10 && abs < 20) return forms[2];
+  if (lastDigit > 1 && lastDigit < 5) return forms[1];
+  if (lastDigit === 1) return forms[0];
+  return forms[2];
 }
