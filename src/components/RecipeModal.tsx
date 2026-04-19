@@ -39,13 +39,14 @@ export default function RecipeModal({ item, onClose }: RecipeModalProps) {
         className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative h-64 bg-gradient-to-br from-amber-50 to-orange-100 overflow-hidden rounded-t-3xl">
+        <div className="relative bg-gradient-to-br from-amber-50 to-orange-100 overflow-hidden rounded-t-3xl">
           {photoUrl ? (
             <Image
               src={photoUrl}
               alt={item.name}
-              fill
-              className="object-cover"
+              width={512}
+              height={512}
+              className="w-full h-auto object-contain"
               sizes="(max-width: 640px) 100vw, 512px"
             />
           ) : (
